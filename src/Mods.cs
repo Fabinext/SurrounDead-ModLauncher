@@ -15,12 +15,12 @@ namespace SDModLauncher
 
     class Catalog
     {
-        public const int LauncherVersion = 2;
+        public const int LauncherVersion = 3;
         public const string DefaultUrl = "https://raw.githubusercontent.com/Fabinext/SurrounDead-ModLauncher/main/catalog.json";
 
         public int MinLauncher;
         public int LatestLauncher;
-        public string LauncherUrl, Notice;
+        public string LauncherUrl, Notice, Discord;
         public List<ModEntry> Mods = new List<ModEntry>();
 
         public bool LauncherTooOld { get { return MinLauncher > LauncherVersion; } }
@@ -36,6 +36,7 @@ namespace SDModLauncher
                 LatestLauncher = (int)J.Long(d, "launcher.version"),
                 LauncherUrl = J.Str(d, "launcher.url"),
                 Notice = J.Str(d, "notice"),
+                Discord = J.Str(d, "discord"),
             };
             foreach (object o in J.Arr(d, "mods"))
             {

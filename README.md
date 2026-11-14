@@ -2,6 +2,8 @@
 
 One small exe that installs, updates and switches SurrounDead mods.
 
+**Want your mod in the launcher?** Join our [Discord](https://discord.gg/aDhks82XTv) and tell us about it, or open an issue here.
+
 - Mods come from [`catalog.json`](catalog.json). Adding a mod never needs a new launcher. See [docs/MOD_MANIFEST.md](docs/MOD_MANIFEST.md).
 - Finds the game through Steam and checks the game build and branch each mod needs.
 - Downloads only over https. Every download is checked against its sha256 and unpacked only inside the game folder.

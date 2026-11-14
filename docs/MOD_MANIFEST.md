@@ -1,5 +1,7 @@
 # Adding a mod to the SurrounDead Mod Launcher
 
+Questions or want your mod listed? Join our [Discord](https://discord.gg/aDhks82XTv).
+
 The launcher never changes. It reads two kinds of files:
 
 1. **`catalog.json`** in this repo, which lists every mod. To add a mod, add one entry.

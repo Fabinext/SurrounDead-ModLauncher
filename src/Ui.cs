@@ -332,6 +332,12 @@ namespace SDModLauncher
             IconButton(g, Pixel.Minimize, W - Sc(58), titleH, () => { WindowState = FormWindowState.Minimized; });
             IconButton(g, Pixel.Gear, W - Sc(90), titleH, () => { showSettings = !showSettings; viewer = null; });
             IconButton(g, Pixel.Refresh, W - Sc(120), titleH, () => { if (!busy) { viewer = null; Reload(false); } });
+            // Discord invite comes from catalog.json ("discord"), so it can change without a new launcher
+            if (catalog != null && IsDiscord(catalog.Discord))
+            {
+                string invite = catalog.Discord;
+                IconButton(g, Pixel.Discord, W - Sc(152), titleH, () => Open(invite), Color.FromArgb(88, 101, 242));
+            }
 
             int top = titleH + 1;
             if (catalog != null && (!string.IsNullOrEmpty(catalog.Notice) || catalog.LauncherTooOld))
@@ -629,14 +635,25 @@ namespace SDModLauncher
             }
         }
 
+        static bool IsDiscord(string url)
+        {
+            return url != null && (url.StartsWith("https://discord.gg/", StringComparison.OrdinalIgnoreCase) ||
+                                   url.StartsWith("https://discord.com/invite/", StringComparison.OrdinalIgnoreCase));
+        }
+
         void IconButton(Graphics g, string[] icon, int cx, int titleH, Action a)
+        {
+            IconButton(g, icon, cx, titleH, a, Txt);
+        }
+
+        void IconButton(Graphics g, string[] icon, int cx, int titleH, Action a, Color hoverColor)
         {
             int px = Px(2);
             Size s = Pixel.SpriteSize(icon, px);
             var r = new Rectangle(cx - Sc(13), 1, Sc(26), titleH - 2);
             bool hover = r.Contains(mouse);
             if (hover) Fill(g, Color.FromArgb(32, 32, 32), r);
-            Pixel.Sprite(g, icon, r.X + (r.Width - s.Width) / 2, (titleH - s.Height) / 2, px, hover ? Txt : Muted);
+            Pixel.Sprite(g, icon, r.X + (r.Width - s.Width) / 2, (titleH - s.Height) / 2, px, hover ? hoverColor : Muted);
             Hit(r, a);
         }
 
