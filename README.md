@@ -6,6 +6,8 @@ One small exe that installs, updates and switches SurrounDead mods.
 - Finds the game through Steam and checks the game build and branch each mod needs.
 - Downloads only over https. Every download is checked against its sha256 and unpacked only inside the game folder.
 - Only one mod is active at a time. Files it replaced are backed up and restored when the mod is removed.
+- Shows each mod's own icon, banner, screenshots and changelog.
+- Notices a game update when you switch back to it (or press reload).
 - Never runs setup programs from the internet.
 
 Data, cache and backups: `%LOCALAPPDATA%\SDModLauncher\`

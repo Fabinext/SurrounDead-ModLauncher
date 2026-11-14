@@ -82,6 +82,12 @@ namespace SDModLauncher
             else Check(false, "fixture missing: " + fx);
             Check(Manifest.FromJson("{\"install\":{\"run_script\":\"x\"}}").Unsupported == "run_script", "unknown install key");
 
+            Manifest c1 = Manifest.FromJson("{\"changelog\":\"- Fixed A\\n* Added B\\n\\nC\",\"screenshots\":[\"https://a/1.png\",\"\",\"https://a/2.png\"]}");
+            Check(c1.Changelog.Count == 3 && c1.Changelog[0] == "Fixed A" && c1.Changelog[1] == "Added B", "changelog as text");
+            Check(c1.Screenshots.Count == 2, "screenshots list");
+            Manifest c2 = Manifest.FromJson("{\"changelog\":[\"One\",\"- Two\"]}");
+            Check(c2.Changelog.Count == 2 && c2.Changelog[1] == "Two", "changelog as list");
+
             // --- path guard
             string root = Path.Combine(tmp, @"lib\steamapps\common\SurrounDead");
             Directory.CreateDirectory(root);

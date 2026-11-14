@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "min_launcher": 1,
-  "launcher": { "version": 1, "url": "https://github.com/Fabinext/SurrounDead-ModLauncher/releases/latest" },
+  "launcher": { "version": 2, "url": "https://github.com/Fabinext/SurrounDead-ModLauncher/releases/latest" },
   "notice": "",
   "mods": [
     {

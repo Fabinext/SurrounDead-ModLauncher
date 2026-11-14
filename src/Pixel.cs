@@ -67,6 +67,7 @@ namespace SDModLauncher
         public static readonly string[] Check = { "......#", ".....##", "#...##.", "##.##..", ".###...", "..#...." };
         public static readonly string[] Trash = { "..###..", "#######", ".#####.", ".#.#.#.", ".#.#.#.", ".#.#.#.", ".#####." };
         public static readonly string[] Folder = { "###.....", "########", "#......#", "#......#", "#......#", "########" };
+        public static readonly string[] Refresh = { "..####..", ".#....#.", "#....###", "#.....#.", "#.......", ".#....#.", "..####.." };
         public static readonly string[] Back = { "...#...", "..##...", ".######", "#######", ".######", "..##...", "...#..." };
 
         public static void Sprite(Graphics g, string[] rows, int x, int y, int px, Color c)

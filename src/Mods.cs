@@ -15,7 +15,7 @@ namespace SDModLauncher
 
     class Catalog
     {
-        public const int LauncherVersion = 1;
+        public const int LauncherVersion = 2;
         public const string DefaultUrl = "https://raw.githubusercontent.com/Fabinext/SurrounDead-ModLauncher/main/catalog.json";
 
         public int MinLauncher;
@@ -95,6 +95,7 @@ namespace SDModLauncher
         public string EnabledBy, Ue4ssSha256;
         public List<string> KeepIfPresent = new List<string>(), OffByDefault = new List<string>();
         public List<IniSet> Ini = new List<IniSet>();
+        public List<string> Changelog = new List<string>(), Screenshots = new List<string>();
         public string Unsupported;   // set when the manifest needs a newer launcher
 
         public static Manifest FromJson(string text)
@@ -128,6 +129,16 @@ namespace SDModLauncher
                 if (x == null) continue;
                 m.Ini.Add(new IniSet { File = J.Str(x, "file"), Section = J.Str(x, "section"), Key = J.Str(x, "key"), Value = J.Str(x, "value") });
             }
+            // changelog: one string (lines) or a list of strings; leading "-" or "*" bullets are dropped
+            object cl = J.Get(d, "changelog");
+            var lines = cl is string ? new List<string>(((string)cl).Replace("\r", "").Split('\n')) : J.StrList(d, "changelog");
+            foreach (string l in lines)
+            {
+                string t = l.Trim().TrimStart('-', '*', '\u2022').Trim();
+                if (t.Length > 0 && m.Changelog.Count < 30) m.Changelog.Add(t);
+            }
+            foreach (string u in J.StrList(d, "screenshots"))
+                if (m.Screenshots.Count < 6 && !string.IsNullOrWhiteSpace(u)) m.Screenshots.Add(u.Trim());
             var install = J.Obj(d, "install");
             if (install != null)
                 foreach (string k in install.Keys)

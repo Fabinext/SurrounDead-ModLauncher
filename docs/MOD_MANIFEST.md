@@ -37,6 +37,8 @@ The launcher never changes. It reads two kinds of files:
   },
   "icon": "https://.../icon.png",
   "banner": "https://.../banner.png",
+  "screenshots": ["https://.../shot1.png", "https://.../shot2.png"],
+  "changelog": ["Fixed doors opening twice", "New: shared map markers"],
   "notes": "https://github.com/me/MyMod/releases/tag/v1.2.0"
 }
 ```
@@ -53,7 +55,10 @@ The launcher never changes. It reads two kinds of files:
 | `off_by_default` | Folders (their `enabled.txt` becomes `enabled.txt.off`) or files (renamed to `.off`) that are switched off on the first install. |
 | `ini_set` | Optional ini keys. `file` must start with `{game}/` or `{config}/` (= `%LOCALAPPDATA%\SurrounDead\Saved\Config`). Removed again on uninstall. |
 | `icon` | Square PNG, about 128×128 (64×64 or smaller is drawn as pixel art). |
-| `banner` | Wide PNG or JPG, about 1280×400. |
+| `banner` | Wide PNG or JPG, about 1280×400. Shown behind the mod name; keep the important part in the middle, the bottom ~15% is darkened for the title. |
+| `screenshots` | Up to 6 preview images (PNG or JPG, 16:9 such as 1280×720 works best). Shown as thumbnails; a click opens them large. |
+| `changelog` | Short lines shown under the button ("CHANGES"). A list of strings, or one string with one line per change. Keep it to the latest release, about 3 to 6 lines. |
+| `notes` | Link to the full release notes ("Full changelog"). |
 
 Rules the launcher enforces:
 - Images are PNG or JPG, at most 2 MB.
@@ -61,6 +66,16 @@ Rules the launcher enforces:
 - Setup programs and other executables in the manifest are never run.
 - Unknown keys under `install` make the launcher show *Update launcher* instead of guessing.
 - Everything else unknown is ignored.
+
+## Hosting the images
+
+The simplest way is to keep the images in your GitHub repo, e.g. a folder `launcher/`, and link the raw files:
+
+```
+https://raw.githubusercontent.com/<you>/<repo>/<branch>/launcher/banner.png
+```
+
+Those links stay the same across releases. Without images the launcher draws a pixel landscape and a pixel icon.
 
 ## Checksum (PowerShell)
 

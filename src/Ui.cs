@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -20,6 +21,7 @@ namespace SDModLauncher
         public string Problem;
         public Image Icon, Banner;
         public Bitmap Placeholder;
+        public List<Image> Shots = new List<Image>();
 
         public bool Installed { get { return Record != null; } }
         public bool HasUpdate { get { return Record != null && Manifest != null && Ver.Compare(Manifest.Version, Record.Version) > 0; } }
@@ -70,6 +72,8 @@ namespace SDModLauncher
         string status;
         DateTime removeArmedUntil;
         Point mouse;
+        Image viewer;
+        DateTime lastGameCheck;
         float S = 1f;
 
         [DllImport("user32.dll")] static extern bool ReleaseCapture();
@@ -90,6 +94,7 @@ namespace SDModLauncher
             using (Bitmap ico = Pixel.SpriteBitmap(Pixel.Tower, 3, Amber, Color.FromArgb(20, 20, 20))) Icon = System.Drawing.Icon.FromHandle(ico.GetHicon());
             anim.Tick += (s, e) => { if (busy) Invalidate(); };
             anim.Start();
+            KeyPreview = true;
             Shown += (s, e) => Reload(true);
         }
 
@@ -183,6 +188,12 @@ namespace SDModLauncher
                     string banner = mv.Manifest != null && !string.IsNullOrEmpty(mv.Manifest.Banner) ? mv.Manifest.Banner : mv.Entry.Banner;
                     Image ii = Images.Load(icon), bb = Images.Load(banner);
                     Ui(() => { mv.Icon = ii; mv.Banner = bb; Invalidate(); });
+                    if (mv.Manifest != null)
+                        foreach (string su in mv.Manifest.Screenshots)
+                        {
+                            Image si = Images.Load(su);
+                            if (si != null) Ui(() => { mv.Shots.Add(si); Invalidate(); });
+                        }
                 }
                 if (startup && settings.AutoUpdate && g != null)
                     foreach (ModView v in list)
@@ -319,7 +330,8 @@ namespace SDModLauncher
             Pixel.Text(g, "MODS", tx + Pixel.TextWidth("SURROUNDEAD ", px2), (titleH - 7 * px2) / 2, px2, Muted);
             IconButton(g, Pixel.Close, W - Sc(30), titleH, () => Close());
             IconButton(g, Pixel.Minimize, W - Sc(58), titleH, () => { WindowState = FormWindowState.Minimized; });
-            IconButton(g, Pixel.Gear, W - Sc(90), titleH, () => { showSettings = !showSettings; });
+            IconButton(g, Pixel.Gear, W - Sc(90), titleH, () => { showSettings = !showSettings; viewer = null; });
+            IconButton(g, Pixel.Refresh, W - Sc(120), titleH, () => { if (!busy) { viewer = null; Reload(false); } });
 
             int top = titleH + 1;
             if (catalog != null && (!string.IsNullOrEmpty(catalog.Notice) || catalog.LauncherTooOld))
@@ -335,7 +347,7 @@ namespace SDModLauncher
             int bottom = H - bottomH;
 
             if (showSettings) PaintSettings(g, top, bottom, W);
-            else PaintMain(g, top, bottom, W);
+            else { PaintMain(g, top, bottom, W); PaintViewer(g, top, bottom, W); }
             PaintBottom(g, bottom, W, H);
         }
 
@@ -363,7 +375,7 @@ namespace SDModLauncher
                 TextRenderer.DrawText(g, v.Entry.Name, uiBold, new Rectangle(Sc(56), y, leftW - Sc(84), rowH), nameC, TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix);
                 Fill(g, DotColor(v), new Rectangle(leftW - Sc(22), y + (rowH - Sc(8)) / 2, Sc(8), Sc(8)));
                 int idx = i;
-                Hit(r, () => { sel = idx; removeArmedUntil = DateTime.MinValue; });
+                Hit(r, () => { sel = idx; removeArmedUntil = DateTime.MinValue; viewer = null; });
                 y += rowH + Sc(2);
             }
 
@@ -383,6 +395,7 @@ namespace SDModLauncher
             TextRenderer.DrawText(g, ver, smallFont, new Point(banner.X + Sc(20), banner.Bottom - Sc(22)), Color.FromArgb(185, 183, 174), TextFormatFlags.NoPrefix);
 
             int ax = banner.X + Sc(20), ay = banner.Bottom + Sc(22);
+            PaintDetails(g, cur, ax, ay + Sc(54), bottom, W);
             if (busy) return;
             if (cur.Problem != null)
             {
@@ -397,14 +410,88 @@ namespace SDModLauncher
             else if (!active) Button(g, "ACTIVATE", Pixel.Check, ax, ay, true, () => InstallOrActivate(cur));
             else Chip(g, "ACTIVE", ax, ay, Green);
             if (cur.Installed) TrashButton(g, cur, W, ay);
-            if (cur.Manifest != null && !string.IsNullOrEmpty(cur.Manifest.Notes))
+        }
+
+        // Changelog lines and screenshot thumbnails below the action row (any mod state)
+        void PaintDetails(Graphics g, ModView cur, int x, int y, int bottom, int W)
+        {
+            Manifest m = cur.Manifest;
+            if (m == null) return;
+            int right = W - Sc(24), tw = Sc(128), th = Sc(72);
+            int shotsTop = bottom - Sc(16) - th;
+            int maxY = cur.Shots.Count > 0 ? shotsTop - Sc(10) : bottom - Sc(10);
+            int lineH = Sc(19), ly = y;
+            if (m.Changelog.Count > 0)
             {
-                var lr = new Rectangle(ax, ay + Sc(50), Sc(90), Sc(20));
-                TextRenderer.DrawText(g, "Changelog", lr.Contains(mouse) ? linkFont : smallFont, lr, Muted, TextFormatFlags.NoPrefix | TextFormatFlags.Left);
-                string url = cur.Manifest.Notes;
+                Pixel.Text(g, "CHANGES", x, ly, Px(2), Dim);
+                ly += Sc(22);
+                foreach (string line in m.Changelog)
+                {
+                    if (ly + lineH > maxY) break;
+                    Fill(g, Amber, new Rectangle(x, ly + (lineH - Sc(4)) / 2, Sc(4), Sc(4)));
+                    TextRenderer.DrawText(g, line, smallFont, new Rectangle(x + Sc(14), ly, right - x - Sc(14), lineH), Txt,
+                        TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis | TextFormatFlags.NoPrefix | TextFormatFlags.SingleLine);
+                    ly += lineH;
+                }
+                ly += Sc(4);
+            }
+            if (!string.IsNullOrEmpty(m.Notes) && ly + Sc(20) <= maxY)
+            {
+                var lr = new Rectangle(x, ly, Sc(110), Sc(20));
+                TextRenderer.DrawText(g, m.Changelog.Count > 0 ? "Full changelog" : "Changelog", lr.Contains(mouse) ? linkFont : smallFont, lr, Muted, TextFormatFlags.NoPrefix | TextFormatFlags.Left);
+                string url = m.Notes;
                 Hit(lr, () => Open(url));
             }
+            int tx = x;
+            foreach (Image img in cur.Shots)
+            {
+                if (tx + tw > right) break;
+                var r = new Rectangle(tx, shotsTop, tw, th);
+                Fill(g, Color.FromArgb(29, 29, 29), r);
+                Pixel.DrawImageCover(g, img, r, false);
+                using (var p = new Pen(r.Contains(mouse) ? Amber : Line, Px(1))) g.DrawRectangle(p, r.X, r.Y, r.Width - 1, r.Height - 1);
+                Image im = img;
+                Hit(r, () => { viewer = im; });
+                tx += tw + Sc(8);
+            }
         }
+
+        // Full view of a screenshot over the main area; click or Esc closes it
+        void PaintViewer(Graphics g, int top, int bottom, int W)
+        {
+            if (viewer == null) return;
+            var area = new Rectangle(1, top, W - 2, bottom - top);
+            using (var b = new SolidBrush(Color.FromArgb(240, 10, 10, 10))) g.FillRectangle(b, area);
+            float s = Math.Min((float)(area.Width - Sc(40)) / viewer.Width, (float)(area.Height - Sc(40)) / viewer.Height);
+            int iw = (int)(viewer.Width * s), ih = (int)(viewer.Height * s);
+            var ir = new Rectangle(area.X + (area.Width - iw) / 2, area.Y + (area.Height - ih) / 2, iw, ih);
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.DrawImage(viewer, ir);
+            g.InterpolationMode = InterpolationMode.Default;
+            Hit(area, () => { viewer = null; });
+        }
+
+        // Game updated while the launcher was open: re-read build/branch when the window gets focus again
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            if (busy || catalog == null || (DateTime.Now - lastGameCheck).TotalSeconds < 2) return;
+            lastGameCheck = DateTime.Now;
+            GameInfo gi = Steam.Find(string.IsNullOrEmpty(gameOverride) ? settings.GamePath : gameOverride);
+            bool changed = (gi == null) != (game == null) || (gi != null && (gi.Build != game.Build || gi.Branch != game.Branch || gi.Root != game.Root));
+            if (!changed) return;
+            game = gi;
+            foreach (ModView v in mods) if (v.Manifest != null) v.Problem = v.Manifest.Problem(gi);
+            status = null;
+            Invalidate();
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            if (e.KeyCode == Keys.Escape && viewer != null) { viewer = null; Invalidate(); }
+        }
+
 
         void PaintSettings(Graphics g, int top, int bottom, int W)
         {
