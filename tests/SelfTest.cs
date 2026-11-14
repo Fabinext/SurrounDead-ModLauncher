@@ -169,6 +169,9 @@ namespace SDModLauncher
             ModInstaller.Uninstall("u", root);
             ModInstaller.Uninstall("t", root);
             Check(!File.Exists(Path.Combine(w64, @"Mods\T\Scripts\main.lua")), "uninstall removed files");
+            Check(!Directory.Exists(Path.Combine(w64, @"Mods\T")) && !Directory.Exists(Path.Combine(w64, @"Mods\U")), "uninstall removed mod folders");
+            Check(!Directory.Exists(Path.Combine(w64, @"Mods\Extra")), "uninstall removed switched-off leftovers");
+            Check(Directory.Exists(Path.Combine(w64, "Mods")) && File.Exists(Path.Combine(w64, "UE4SS-settings.ini")), "pre-existing folders and files kept");
             Check(File.ReadAllText(Path.Combine(w64, @"Mods\mods.txt")) == "original", "uninstall restored backup");
             Check(File.Exists(ini) && !File.ReadAllText(ini).Contains("bUseSteamNetworking"), "uninstall removed ini key");
             Check(InstallRecord.All().Count == 0, "no records left");

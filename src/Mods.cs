@@ -191,11 +191,12 @@ namespace SDModLauncher
         public List<string> Files { get; set; }
         public List<string> Backups { get; set; }
         public List<string> Shared { get; set; }
+        public List<string> Dirs { get; set; }     // folders this mod created (removed again when empty)
         public List<IniSet> Ini { get; set; }
 
         public InstallRecord()
         {
-            Files = new List<string>(); Backups = new List<string>(); Shared = new List<string>(); Ini = new List<IniSet>();
+            Files = new List<string>(); Backups = new List<string>(); Shared = new List<string>(); Ini = new List<IniSet>(); Dirs = new List<string>();
         }
 
         static string PathOf(string id) { return Path.Combine(Paths.Installed, Paths.SafeName(id) + ".json"); }
@@ -368,7 +369,7 @@ namespace SDModLauncher
 
             InstallRecord old = InstallRecord.Load(e.Id);
             var rec = new InstallRecord { Id = e.Id, Version = m.Version, GameRoot = root, EnabledBy = m.EnabledBy, ZipPath = zipPath };
-            if (old != null) { rec.Backups.AddRange(old.Backups); }
+            if (old != null) { rec.Backups.AddRange(old.Backups); if (old.Dirs != null) rec.Dirs.AddRange(old.Dirs); }
             bool replaceShared = Ue4ssMismatch(root, m);
             bool otherMods = InstallRecord.All().Any(r => r.Id != e.Id);
 
@@ -387,6 +388,7 @@ namespace SDModLauncher
                     }
                     bool ownedBefore = old != null && (old.Files.Contains(rel) || old.Shared.Contains(rel));
                     if (!ownedBefore) BackupFile(e.Id, root, rel, target, rec);
+                    TrackDirs(root, target, rec);
                     WriteEntry(entry, target);
                     if (!shared) rec.Files.Add(rel);
                 }
@@ -414,11 +416,43 @@ namespace SDModLauncher
             else SetEnabled(root, rec.EnabledBy, false);
         }
 
+        // Remembers every folder above target that does not exist yet (relative to the game root)
+        static void TrackDirs(string root, string target, InstallRecord rec)
+        {
+            if (rec.Dirs == null) rec.Dirs = new List<string>();
+            string rootFull = Path.GetFullPath(root).TrimEnd('\\');
+            string dir = Path.GetDirectoryName(target);
+            while (dir != null && dir.Length > rootFull.Length && Paths.IsInside(dir, root) && !Directory.Exists(dir))
+            {
+                string rel = Norm(dir.Substring(rootFull.Length + 1));
+                if (!rec.Dirs.Contains(rel)) rec.Dirs.Add(rel);
+                dir = Path.GetDirectoryName(dir);
+            }
+        }
+
+        // Deletes the folders this mod created, deepest first, but only when they are empty
+        static void RemoveDirs(string root, InstallRecord rec)
+        {
+            if (rec.Dirs == null) return;
+            foreach (string rel in rec.Dirs.OrderByDescending(d => d.Length).ToList())
+            {
+                string full = Target(root, rel);
+                try
+                {
+                    if (full != null && Directory.Exists(full) && !Directory.EnumerateFileSystemEntries(full).Any())
+                        Directory.Delete(full);
+                }
+                catch (Exception) { }
+            }
+        }
+
         static void RemoveFile(string root, string rel, InstallRecord rec)
         {
             string target = Target(root, rel);
             if (target == null) return;
             if (File.Exists(target)) { File.SetAttributes(target, FileAttributes.Normal); File.Delete(target); }
+            string off = target + ".off";   // switched off by off_by_default
+            if (File.Exists(off)) { File.SetAttributes(off, FileAttributes.Normal); File.Delete(off); }
             if (rec.Backups.Contains(rel))
             {
                 string bak = Path.Combine(Paths.Backup, Paths.SafeName(rec.Id), rel.Replace('/', '\\'));
@@ -501,6 +535,7 @@ namespace SDModLauncher
                 string path = IniPath(root, s.File);
                 if (path != null && File.Exists(path)) IniFile.Set(path, s.Section, s.Key, null);
             }
+            RemoveDirs(root, rec);
             rec.Delete();
             try { Directory.Delete(Path.Combine(Paths.Backup, Paths.SafeName(id)), true); } catch (Exception) { }
         }
