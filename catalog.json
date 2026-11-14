@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "min_launcher": 1,
+  "launcher": { "version": 1, "url": "https://github.com/Fabinext/SurrounDead-ModLauncher/releases/latest" },
+  "notice": "",
+  "mods": [
+    {
+      "id": "surrounsync",
+      "name": "SurrounSync",
+      "author": "SYMPLYSCK",
+      "manifest": "https://github.com/SYMPLYSCK/SurrounSync/releases/latest/download/version.json",
+      "homepage": "https://github.com/SYMPLYSCK/SurrounSync"
+    }
+  ]
+}

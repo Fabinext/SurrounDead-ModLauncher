@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "name": "SurrounSync",
+  "version": "1.1.1",
+  "protocol": 62,
+  "released": "2026-11-12",
+  "game": {
+    "name": "SurrounDead",
+    "steam_app_id": 1645820,
+    "build": "26471822",
+    "branch": "",
+    "requires_exact_build": true,
+    "how_to_read": "steamapps/appmanifest_1645820.acf: \"buildid\" and UserConfig \"BetaKey\" (missing or \"public\" = the normal branch)"
+  },
+  "download": {
+    "url": "https://github.com/SYMPLYSCK/SurrounSync/releases/download/v1.1.1/SurrounSync-1.1.1.zip",
+    "file": "SurrounSync-1.1.1.zip",
+    "size": 12625011,
+    "sha256": "029aeebf2ecfb23d7e648ee74adbf74b965ab05d7aa49c61a10dcdd3ddaca3e3"
+  },
+  "install": {
+    "unzip_to": "the game's install folder, the one that holds SurrounDead.exe (Steam: steamapps/common/SurrounDead)",
+    "enabled_by": "SurrounDead/Binaries/Win64/ue4ss/Mods/SurrounSync/enabled.txt",
+    "keep_if_present": [
+      "SurrounDead/Binaries/Win64/dwmapi.dll",
+      "SurrounDead/Binaries/Win64/ue4ss/UE4SS.dll",
+      "SurrounDead/Binaries/Win64/ue4ss/UE4SS-settings.ini",
+      "SurrounDead/Binaries/Win64/ue4ss/LICENSE",
+      "SurrounDead/Binaries/Win64/ue4ss/UE4SS_Signatures/",
+      "SurrounDead/Binaries/Win64/ue4ss/Mods/BPModLoaderMod/",
+      "SurrounDead/Binaries/Win64/ue4ss/Mods/shared/UEHelpers/"
+    ],
+    "ue4ss_dll_sha256": "d6f35284bf0344cd54da7c1027ed124f0a499d58c076a30fb0b4b73fe0175b02",
+    "off_by_default": [
+      "SurrounDead/Binaries/Win64/ue4ss/Mods/SyncFX/",
+      "SurrounDead/Binaries/Win64/ue4ss/Mods/SurrounDeadGore/",
+      "SurrounDead/Content/Paks/LogicMods/SurrounDeadGore.pak.off"
+    ]
+  },
+  "setup": "https://github.com/SYMPLYSCK/SurrounSync/releases/download/v1.1.1/SurrounSyncSetup.exe",
+  "notes": "https://github.com/SYMPLYSCK/SurrounSync/releases/tag/v1.1.1"
+}
